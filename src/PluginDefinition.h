@@ -36,7 +36,7 @@ const TCHAR NPP_PLUGIN_NAME[] = TEXT("Notepad++ plugin demo");
 //
 // Here define the number of your plugin commands
 //
-const int nbFunc = 19;
+const int nbFunc = 1;
 
 
 //
@@ -71,23 +71,6 @@ bool setCommand(size_t index, TCHAR *cmdName, PFUNCPLUGINCMD pFunc, ShortcutKey 
 // Your plugin command functions
 //
 void hello();
-void helloFX();
-void WhatIsNpp();
-void insertDateTime(bool format);
-void insertShortDateTime();
-void insertLongDateTime();
-void insertCurrentPath(int which);
-void insertCurrentFullPath();
-void insertCurrentFileName();
-void insertCurrentDirectory();
-void insertHtmlCloseTag();
-void getFileNamesDemo();
-void getSessionFileNamesDemo();
-void saveCurrentSessionDemo();
-void DockableDlgDemo();
-void goToPluginCommunicationGuide();
-void goToPluginDemoRepo();
-
 
 
 #endif //PLUGINDEFINITION_H
