@@ -21,6 +21,8 @@
 //
 // put the headers you need here
 //
+#include <stdio.h>
+#include <stdarg.h>
 #include <stdlib.h>
 #include <time.h>
 #include <shlwapi.h>
@@ -116,21 +118,40 @@ void commandMenuCleanUp()
 //----------------------------------------------//
 //-- STEP 4. DEFINE YOUR ASSOCIATED FUNCTIONS --//
 //----------------------------------------------//
+
+int FindMatchingBracket(const char* str, int pos, int& start, int& end);
+
+void MyMessageBox(TCHAR* fmt, ...)
+{
+    va_list args;
+    TCHAR msg[1000];
+
+    va_start(args, fmt);
+    vsnwprintf(msg, sizeof(msg), fmt, args);
+    va_end(args);
+    ::MessageBox(nppData._nppHandle, msg, TEXT("Message"), MB_OK);
+}
+
 void hello()
 {
-    // Open a new document
-    ::SendMessage(nppData._nppHandle, NPPM_MENUCOMMAND, 0, IDM_FILE_NEW);
-
     // Get the current scintilla
     int which = -1;
     ::SendMessage(nppData._nppHandle, NPPM_GETCURRENTSCINTILLA, 0, (LPARAM)&which);
     if (which == -1)
         return;
-    HWND curScintilla = (which == 0)?nppData._scintillaMainHandle:nppData._scintillaSecondHandle;
+    HWND hwnd_scin = (which == 0) ? nppData._scintillaMainHandle : nppData._scintillaSecondHandle;
 
-    // Say hello now :
-    // Scintilla control has no Unicode mode, so we use (char *) here
-    ::SendMessage(curScintilla, SCI_SETTEXT, 0, (LPARAM)"Hello, Notepad++!");
+    // Get scintilla infomation
+    int pos = ::SendMessage(hwnd_scin, SCI_GETCURRENTPOS, 0, 0);
+    int length = (int)::SendMessage(hwnd_scin, SCI_GETTEXTLENGTH, 0, 0);
+    char text[length + 1];
+    ::SendMessage(hwnd_scin, SCI_GETTEXT, length + 1, (LPARAM)text);
+
+    // Find span and set selection
+    int sel_start, sel_end;
+    if (FindMatchingBracket(text, pos, sel_start, sel_end)) {
+        ::SendMessage(hwnd_scin, SCI_SETSEL, sel_start, MAKELONG(sel_end, 0));
+    }
 }
 
 //
