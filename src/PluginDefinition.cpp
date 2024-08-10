@@ -101,7 +101,14 @@ void commandMenuInit()
     //            ShortcutKey *shortcut,          // optional. Define a shortcut to trigger this command
     //            bool check0nInit                // optional. Make this menu item be checked visually
     //            );
-    setCommand(0, TEXT("Hello Notepad++"), hello, NULL, false);
+
+    ShortcutKey *shKey = new ShortcutKey;
+    shKey->_isAlt = true;
+    shKey->_isCtrl = false;
+    shKey->_isShift = false;
+    shKey->_key = 0x51; //VK_Q
+    setCommand(0, TEXT("Hello Notepad++"), hello, shKey, false);
+
 }
 
 
@@ -110,9 +117,8 @@ void commandMenuInit()
 //
 void commandMenuCleanUp()
 {
-	// Don't forget to deallocate your shortcut here
-	delete funcItem[4]._pShKey;
-	delete funcItem[9]._pShKey;
+    // Don't forget to deallocate your shortcut here
+    delete funcItem[0]._pShKey;
 }
 
 //----------------------------------------------//
