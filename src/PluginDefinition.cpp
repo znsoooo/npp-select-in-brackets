@@ -125,7 +125,7 @@ void commandMenuCleanUp()
 //-- STEP 4. DEFINE YOUR ASSOCIATED FUNCTIONS --//
 //----------------------------------------------//
 
-int FindMatchingBracket(const char* str, int pos, int& start, int& end);
+int FindMatchingBracket(const char* str, int pos, int* ptr_start, int* ptr_end);
 
 void MyMessageBox(TCHAR* fmt, ...)
 {
@@ -155,7 +155,7 @@ void hello()
 
     // Find span and set selection
     int sel_start, sel_end;
-    if (FindMatchingBracket(text, pos, sel_start, sel_end)) {
+    if (FindMatchingBracket(text, pos, &sel_start, &sel_end)) {
         ::SendMessage(hwnd_scin, SCI_SETSEL, sel_start, MAKELONG(sel_end, 0));
     }
 }
