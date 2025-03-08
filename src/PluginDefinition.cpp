@@ -142,22 +142,33 @@ void hello()
 {
     // Get the current scintilla
     int which = -1;
-    ::SendMessage(nppData._nppHandle, NPPM_GETCURRENTSCINTILLA, 0, (LPARAM)&which);
+    SendMessage(nppData._nppHandle, NPPM_GETCURRENTSCINTILLA, 0, (LPARAM)&which);
     if (which == -1)
         return;
     HWND hwnd_scin = (which == 0) ? nppData._scintillaMainHandle : nppData._scintillaSecondHandle;
 
-    // Get scintilla infomation
-    int pos = ::SendMessage(hwnd_scin, SCI_GETCURRENTPOS, 0, 0);
-    int length = (int)::SendMessage(hwnd_scin, SCI_GETTEXTLENGTH, 0, 0);
-    char text[length + 1];
-    ::SendMessage(hwnd_scin, SCI_GETTEXT, length + 1, (LPARAM)text);
+    // Get scintilla information
+    int length = SendMessage(hwnd_scin, SCI_GETTEXTLENGTH, 0, 0);
+    char* text = new char[length + 1];
+    SendMessage(hwnd_scin, SCI_GETTEXT, length + 1, (LPARAM)text);
 
-    // Find span and set selection
-    int sel_start, sel_end;
-    if (FindMatchingBracket(text, pos, &sel_start, &sel_end)) {
-        ::SendMessage(hwnd_scin, SCI_SETSEL, sel_start, MAKELONG(sel_end, 0));
+    // Get all positions
+    int count = SendMessage(hwnd_scin, SCI_GETSELECTIONS, 0, 0);
+    int pos[count];
+    for (int i = 0; i < count; i++) {
+        pos[i] = SendMessage(hwnd_scin, SCI_GETSELECTIONNCARET, i, 0);
     }
+
+    // Find span and set selections
+    int sel_start, sel_end;
+    for (int i = 0; i < count; i++) {
+        if (FindMatchingBracket(text, pos[i], &sel_start, &sel_end)) {
+            SendMessage(hwnd_scin, i ? SCI_ADDSELECTION : SCI_SETSELECTION, sel_end, sel_start);
+        }
+    }
+
+    // Clean up
+    delete[] text;
 }
 
 //
