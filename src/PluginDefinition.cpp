@@ -125,7 +125,7 @@ void commandMenuCleanUp()
 //-- STEP 4. DEFINE YOUR ASSOCIATED FUNCTIONS --//
 //----------------------------------------------//
 
-int FindMatchingBracket(const char* str, int pos, int* ptr_start, int* ptr_end);
+int FindMatchingBracket(const char* str, int length, int sel_start, int sel_end, int& res_start, int& res_end);
 
 void MyMessageBox(TCHAR* fmt, ...)
 {
@@ -152,17 +152,18 @@ void hello()
     char* text = new char[length + 1];
     SendMessage(hwnd_scin, SCI_GETTEXT, length + 1, (LPARAM)text);
 
-    // Get all positions
+    // Get all selections
     int count = SendMessage(hwnd_scin, SCI_GETSELECTIONS, 0, 0);
-    int pos[count];
+    int sel[count][2];
     for (int i = 0; i < count; i++) {
-        pos[i] = SendMessage(hwnd_scin, SCI_GETSELECTIONNCARET, i, 0);
+        sel[i][0] = SendMessage(hwnd_scin, SCI_GETSELECTIONNSTART, i, 0);
+        sel[i][1] = SendMessage(hwnd_scin, SCI_GETSELECTIONNEND, i, 0);
     }
 
     // Find span and set selections
     int sel_start, sel_end;
     for (int i = 0; i < count; i++) {
-        if (FindMatchingBracket(text, pos[i], &sel_start, &sel_end)) {
+        if (FindMatchingBracket(text, length, sel[i][0], sel[i][1], sel_start, sel_end)) {
             SendMessage(hwnd_scin, i ? SCI_ADDSELECTION : SCI_SETSELECTION, sel_end, sel_start);
         }
     }
