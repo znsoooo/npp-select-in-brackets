@@ -28,7 +28,7 @@
 //-------------------------------------//
 // Here define your plugin name
 //
-const TCHAR NPP_PLUGIN_NAME[] = TEXT("Notepad++ plugin demo");
+const TCHAR NPP_PLUGIN_NAME[] = TEXT("Select in Brackets");
 
 //-----------------------------------------------//
 //-- STEP 2. DEFINE YOUR PLUGIN COMMAND NUMBER --//
@@ -36,7 +36,7 @@ const TCHAR NPP_PLUGIN_NAME[] = TEXT("Notepad++ plugin demo");
 //
 // Here define the number of your plugin commands
 //
-const int nbFunc = 1;
+const int nbFunc = 3;
 
 
 //
@@ -70,7 +70,8 @@ bool setCommand(size_t index, TCHAR *cmdName, PFUNCPLUGINCMD pFunc, ShortcutKey 
 //
 // Your plugin command functions
 //
-void hello();
+void SelectInBrackets();
+void SwapSelections(bool anti);
 
 
 #endif //PLUGINDEFINITION_H

@@ -26,6 +26,8 @@
 #include <stdlib.h>
 #include <time.h>
 #include <shlwapi.h>
+#include <vector>
+#include <algorithm>
 
 const TCHAR sectionName[] = TEXT("Insert Extesion");
 const TCHAR keyName[] = TEXT("doCloseTag");
@@ -102,13 +104,14 @@ void commandMenuInit()
     //            bool check0nInit                // optional. Make this menu item be checked visually
     //            );
 
-    ShortcutKey *shKey = new ShortcutKey;
-    shKey->_isAlt = true;
-    shKey->_isCtrl = false;
-    shKey->_isShift = false;
-    shKey->_key = 0x51; //VK_Q
-    setCommand(0, TEXT("Hello Notepad++"), hello, shKey, false);
+    ShortcutKey *sk1 = new ShortcutKey{false, true, false, 'Q'};
+    setCommand(0, TEXT("Select in Brackets"), SelectInBrackets, sk1, false);
 
+    ShortcutKey *sk2 = new ShortcutKey{false, true, false, 'X'};
+    setCommand(1, TEXT("Swap Selections"), [](){SwapSelections(false);}, sk2, false);
+
+    ShortcutKey *sk3 = new ShortcutKey{false, true, true, 'X'};
+    setCommand(2, TEXT("Anti-Swap Selections"), [](){SwapSelections(true);}, sk3, false);
 }
 
 
@@ -118,7 +121,9 @@ void commandMenuInit()
 void commandMenuCleanUp()
 {
     // Don't forget to deallocate your shortcut here
-    delete funcItem[0]._pShKey;
+    for (int i = 0; i < nbFunc; i++) {
+        delete funcItem[i]._pShKey;
+    }
 }
 
 //----------------------------------------------//
@@ -138,14 +143,33 @@ void MyMessageBox(TCHAR* fmt, ...)
     ::MessageBox(nppData._nppHandle, msg, TEXT("Message"), MB_OK);
 }
 
-void hello()
+HWND GetScintilla()
 {
     // Get the current scintilla
     int which = -1;
     SendMessage(nppData._nppHandle, NPPM_GETCURRENTSCINTILLA, 0, (LPARAM)&which);
     if (which == -1)
-        return;
+        return 0;
     HWND hwnd_scin = (which == 0) ? nppData._scintillaMainHandle : nppData._scintillaSecondHandle;
+    return hwnd_scin;
+}
+
+auto GetSelections(HWND hwnd_scin)
+{
+    std::vector<std::vector<int>> selections;
+    int count = SendMessage(hwnd_scin, SCI_GETSELECTIONS, 0, 0);
+    for (int i = 0; i < count; i++) {
+        int start = SendMessage(hwnd_scin, SCI_GETSELECTIONNSTART, i, 0);
+        int end = SendMessage(hwnd_scin, SCI_GETSELECTIONNEND, i, 0);
+        selections.push_back(std::vector<int>{start, end});
+    }
+    return selections;
+}
+
+void SelectInBrackets()
+{
+    // Get the current scintilla
+    HWND hwnd_scin = GetScintilla();
 
     // Get scintilla information
     int length = SendMessage(hwnd_scin, SCI_GETTEXTLENGTH, 0, 0);
@@ -153,23 +177,53 @@ void hello()
     SendMessage(hwnd_scin, SCI_GETTEXT, length + 1, (LPARAM)text);
 
     // Get all selections
-    int count = SendMessage(hwnd_scin, SCI_GETSELECTIONS, 0, 0);
-    int sel[count][2];
-    for (int i = 0; i < count; i++) {
-        sel[i][0] = SendMessage(hwnd_scin, SCI_GETSELECTIONNSTART, i, 0);
-        sel[i][1] = SendMessage(hwnd_scin, SCI_GETSELECTIONNEND, i, 0);
-    }
+    auto sels = GetSelections(hwnd_scin);
 
     // Find span and set selections
     int sel_start, sel_end;
-    for (int i = 0; i < count; i++) {
-        if (FindMatchingBracket(text, length, sel[i][0], sel[i][1], sel_start, sel_end)) {
+    for (int i = 0; i < sels.size(); i++) {
+        if (FindMatchingBracket(text, length, sels[i][0], sels[i][1], sel_start, sel_end)) {
             SendMessage(hwnd_scin, i ? SCI_ADDSELECTION : SCI_SETSELECTION, sel_end, sel_start);
         }
     }
 
     // Clean up
     delete[] text;
+}
+
+void SwapSelections(bool anti)
+{
+    // Get the current scintilla
+    HWND hwnd_scin = GetScintilla();
+
+    // Get all selections
+    auto sels = GetSelections(hwnd_scin);
+    if (sels.size() < 2)
+        return;
+
+    // Swap selections
+    std::sort(sels.begin(), sels.end(), [](const auto& a, const auto& b) { return a[0] < b[0]; });
+    SendMessage(hwnd_scin, SCI_BEGINUNDOACTION, 0, 0);
+    for (int i = anti ? 0 : sels.size() - 2; anti ? (i < sels.size() - 1) : (i >= 0); anti ? i++ : i--) {
+        int j = i + 1;
+        int diff = (sels[j][1] - sels[j][0]) - (sels[i][1] - sels[i][0]);
+        SendMessage(hwnd_scin, SCI_SETSELECTION, sels[i][0], sels[i][1]);
+        SendMessage(hwnd_scin, SCI_COPY, 0, 0);
+        SendMessage(hwnd_scin, SCI_SETSELECTION, sels[j][1], sels[j][1]);
+        SendMessage(hwnd_scin, SCI_PASTE, 0, 0);
+        SendMessage(hwnd_scin, SCI_SETSELECTION, sels[j][1], sels[j][0]);
+        SendMessage(hwnd_scin, SCI_CUT, 0, 0);
+        SendMessage(hwnd_scin, SCI_SETSELECTION, sels[i][0], sels[i][1]);
+        SendMessage(hwnd_scin, SCI_PASTE, 0, 0);
+        sels[i][1] += diff;
+        sels[j][0] += diff;
+    }
+    SendMessage(hwnd_scin, SCI_ENDUNDOACTION, 0, 0);
+
+    // Restore selections
+    for (int i = 0; i < sels.size(); i++) {
+        SendMessage(hwnd_scin, i ? SCI_ADDSELECTION : SCI_SETSELECTION, sels[i][0], sels[i][1]);
+    }
 }
 
 //
