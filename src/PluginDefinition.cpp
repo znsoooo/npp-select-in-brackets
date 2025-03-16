@@ -130,7 +130,7 @@ void commandMenuCleanUp()
 //-- STEP 4. DEFINE YOUR ASSOCIATED FUNCTIONS --//
 //----------------------------------------------//
 
-int FindMatchingBracket(const char* str, int length, int sel_start, int sel_end, int& res_start, int& res_end);
+int FindMatchingBracket(const TCHAR* str, int length, int sel_start, int sel_end, int& res_start, int& res_end);
 
 void MyMessageBox(TCHAR* fmt, ...)
 {
@@ -168,6 +168,10 @@ auto GetSelections(HWND hwnd_scin)
 
 void SelectInBrackets()
 {
+    // Index conversion
+    #define C2W(index) MultiByteToWideChar(codePage, 0, text, index, 0, 0)
+    #define W2C(windex) WideCharToMultiByte(codePage, 0, wtext, windex, 0, 0, 0, 0)
+
     // Get the current scintilla
     HWND hwnd_scin = GetScintilla();
 
@@ -176,19 +180,29 @@ void SelectInBrackets()
     char* text = new char[length + 1];
     SendMessage(hwnd_scin, SCI_GETTEXT, length + 1, (LPARAM)text);
 
+    // Convert to wide string
+    int codePage = SendMessage(hwnd_scin, SCI_GETCODEPAGE, 0, 0);
+    int wlength = C2W(length);
+    wchar_t* wtext = new wchar_t[wlength + 1];
+    MultiByteToWideChar(codePage, 0, text, length, wtext, wlength);
+
     // Get all selections
     auto sels = GetSelections(hwnd_scin);
 
     // Find span and set selections
     int sel_start, sel_end;
     for (int i = 0; i < sels.size(); i++) {
-        if (FindMatchingBracket(text, length, sels[i][0], sels[i][1], sel_start, sel_end)) {
-            SendMessage(hwnd_scin, i ? SCI_ADDSELECTION : SCI_SETSELECTION, sel_end, sel_start);
+        if (FindMatchingBracket(wtext, length, C2W(sels[i][0]), C2W(sels[i][1]), sel_start, sel_end)) {
+            SendMessage(hwnd_scin, i ? SCI_ADDSELECTION : SCI_SETSELECTION, W2C(sel_end), W2C(sel_start));
         }
     }
 
     // Clean up
     delete[] text;
+    delete[] wtext;
+
+    #undef C2W
+    #undef W2C
 }
 
 void SwapSelections(bool anti)

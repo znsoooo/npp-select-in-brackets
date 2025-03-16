@@ -1,12 +1,15 @@
+#define _UNICODE  // Enable uincode
+
 #include <stdio.h>
 #include <string.h>
+#include <tchar.h>
 
 #define min(a, b) ((a) < (b) ? (a) : (b))
 #define max(a, b) ((a) > (b) ? (a) : (b))
 #define expr(x) printf(#x"=%.15g\n", (double)(x))
 
 
-static int FindMatch(const char* str, int pos, int final_pos, int add_ch, int sub_ch)
+static int FindMatch(const TCHAR* str, int pos, int final_pos, int add_ch, int sub_ch)
 {
     int direction = pos <= final_pos ? 1 : -1;
     for (int counter = 1; pos != final_pos; pos += direction) {
@@ -23,15 +26,15 @@ static int FindMatch(const char* str, int pos, int final_pos, int add_ch, int su
     return -1;
 }
 
-int FindMatchingBracket(const char* str, int length, int sel_start, int sel_end, int& res_start, int& res_end)
+int FindMatchingBracket(const TCHAR* str, int length, int sel_start, int sel_end, int& res_start, int& res_end)
 {
     // 1. Find the matching brackets closest to the selected area.
     // 2. If the matching brackets are already selected, expand the selection to include brackets.
     // 3. If no matching brackets are found, select the whole text.
 
-    const char open_chars[] = "([{'\"";
-    const char close_chars[] = ")]}'\"";
-    const int types = min(strlen(open_chars), strlen(close_chars));
+    const TCHAR open_chars[] = _TEXT("([{'\"`（［｛《「『【〖‘“");
+    const TCHAR close_chars[] = _TEXT(")]}'\"`）］｝》」』】〗’”");
+    const int types = min(_tcsclen(open_chars), _tcsclen(close_chars));
 
     int start = 0, end = length, distance = -1;
     for (int i = 0; i < types; i++) {
@@ -62,18 +65,19 @@ int FindMatchingBracket(const char* str, int length, int sel_start, int sel_end,
 
 static int FindMatchingBracketTest()
 {
-    // const char test[] = "apple(banana[cat]dog)everything";
-    const char test[] = "A'quick'bown[fox(jumps(over)the(lazy)dog)]";
-    const int length = strlen(test) + 1;  // cursor position can be at the EOF
+    const TCHAR test[] = _TEXT("A'quick'bown[fox(jumps(over)the(lazy)dog)]（你好（世界））");
+    const int length = _tcsclen(test) + 1;  // cursor position can be at the EOF
+
+    expr(sizeof(TCHAR));
 
     for (int pos = 0; pos < length; pos++) {
         int start, end;
         if (FindMatchingBracket(test, length - 1, pos, pos, start, end)) {
-            char match[length + 1] = "";
-            memcpy(match, test + start, end - start);
-            printf("pos = %d, cur = '%c', span = (%d, %d), match = '%s'\n", pos, test[pos], start, end, match);
+            TCHAR match[length + 1] = {0};
+            _tcsncpy(match, test + start, end - start);
+            _tprintf(_TEXT("pos = %d, cur = '%c', span = (%d, %d), match = '%s'\n"), pos, test[pos], start, end, match);
         } else {
-            printf("pos = %d, cur = '%c', \n", pos, test[pos]);
+            _tprintf(_TEXT("pos = %d, cur = '%c', \n"), pos, test[pos]);
         }
     }
 
