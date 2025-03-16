@@ -1,3 +1,7 @@
+// MIT License
+// Copyright (c) 2024-2025 Shixian Li (znsoooo) <lsx7@sina.com>
+
+
 #define _UNICODE  // Enable uincode
 
 #include <stdio.h>
