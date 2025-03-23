@@ -39,16 +39,17 @@ int FindMatchingBracket(const TCHAR* str, const int length, const int sel_start,
     const TCHAR chars[] = _TEXT("()[]{}''\"\"``（）［］｛｝《》「」『』【】〖〗‘’“”");
     const int types = _tcsclen(chars) / 2;
 
-    int start = 0, end = length, distance = length + 1;
+    int start = 0, end = length, distance = (length + 1) * 2;
     for (int i = 0; i < types; i++) {
         const int open_ch = chars[i * 2];
         const int close_ch = chars[i * 2 + 1];
         int tmp_start = FindMatch(str, sel_start - 1, -1, close_ch, open_ch) + 1;
         int tmp_end = FindMatch(str, sel_end, length, open_ch, close_ch);
-        if (tmp_start != 0 && tmp_end != -1 && min(sel_start - tmp_start, tmp_end - sel_end) < distance) {
+        int tmp_distance = min((sel_start - tmp_start) * 2, (tmp_end - sel_end) * 2 + 1);  // left char is more closer
+        if (tmp_start != 0 && tmp_end != -1 && tmp_distance < distance) {
             start = tmp_start;
             end = tmp_end;
-            distance = min(sel_start - tmp_start, tmp_end - sel_end);
+            distance = tmp_distance;
         }
     }
 
