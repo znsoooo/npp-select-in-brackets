@@ -2,7 +2,7 @@
 // Copyright (c) 2024-2025 Shixian Li (znsoooo) <lsx7@sina.com>
 
 
-#define _UNICODE  // Enable uincode
+#define _UNICODE  // enable unicode
 
 #include <stdio.h>
 #include <string.h>
@@ -13,11 +13,11 @@
 #define expr(x) printf(#x"=%.15g\n", (double)(x))
 
 
-static int FindMatch(const TCHAR* str, int pos, int final_pos, int add_ch, int sub_ch)
+static int FindMatch(const TCHAR* str, int pos, const int final_pos, const int add_ch, const int sub_ch)
 {
-    int direction = pos <= final_pos ? 1 : -1;
-    for (int counter = 1; pos != final_pos; pos += direction) {
-        int ch = str[pos];
+    const int add = pos <= final_pos ? 1 : -1;
+    for (int counter = 1; pos != final_pos; pos += add) {
+        const int ch = str[pos];
         if (ch == sub_ch) {
             counter--;
         } else if (ch == add_ch) {
@@ -30,26 +30,22 @@ static int FindMatch(const TCHAR* str, int pos, int final_pos, int add_ch, int s
     return -1;
 }
 
-int FindMatchingBracket(const TCHAR* str, int length, int sel_start, int sel_end, int& res_start, int& res_end)
+int FindMatchingBracket(const TCHAR* str, const int length, const int sel_start, const int sel_end, int& res_start, int& res_end)
 {
     // 1. Find the matching brackets closest to the selected area.
     // 2. If the matching brackets are already selected, expand the selection to include brackets.
     // 3. If no matching brackets are found, select the whole text.
 
-    const TCHAR open_chars[] = _TEXT("([{'\"`（［｛《「『【〖‘“");
-    const TCHAR close_chars[] = _TEXT(")]}'\"`）］｝》」』】〗’”");
-    const int types = min(_tcsclen(open_chars), _tcsclen(close_chars));
+    const TCHAR chars[] = _TEXT("()[]{}''\"\"``（）［］｛｝《》「」『』【】〖〗‘’“”");
+    const int types = _tcsclen(chars) / 2;
 
-    int start = 0, end = length, distance = -1;
+    int start = 0, end = length, distance = length + 1;
     for (int i = 0; i < types; i++) {
-        int open_ch = open_chars[i];
-        int close_ch = close_chars[i];
-        int tmp_start = FindMatch(str, sel_start - 1, -1, close_ch, open_ch);
+        const int open_ch = chars[i * 2];
+        const int close_ch = chars[i * 2 + 1];
+        int tmp_start = FindMatch(str, sel_start - 1, -1, close_ch, open_ch) + 1;
         int tmp_end = FindMatch(str, sel_end, length, open_ch, close_ch);
-        if (tmp_start != -1) {
-            tmp_start += 1;
-        }
-        if (min(tmp_start, tmp_end) >= 0 && (distance == -1 || min(sel_start - tmp_start, tmp_end - sel_end) < distance)) {
+        if (tmp_start != 0 && tmp_end != -1 && min(sel_start - tmp_start, tmp_end - sel_end) < distance) {
             start = tmp_start;
             end = tmp_end;
             distance = min(sel_start - tmp_start, tmp_end - sel_end);
@@ -61,8 +57,8 @@ int FindMatchingBracket(const TCHAR* str, int length, int sel_start, int sel_end
         end++;
     }
 
-    res_start = start;
-    res_end = end;
+    res_start = max(0, start);
+    res_end = min(length, end);
 
     return 1;
 }
