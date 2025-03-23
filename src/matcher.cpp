@@ -13,11 +13,14 @@
 #define expr(x) printf(#x"=%.15g\n", (double)(x))
 
 
-static int FindMatch(const TCHAR* str, int pos, const int final_pos, const int add_ch, const int sub_ch)
+static int FindMatch(const TCHAR* str, int pos, const int final_pos, const int add_ch, const int sub_ch, const bool in_line)
 {
     const int add = pos <= final_pos ? 1 : -1;
     for (int counter = 1; pos != final_pos; pos += add) {
         const int ch = str[pos];
+        if (in_line && _tcschr(_TEXT("\r\n"), ch)) {
+            return -1;
+        }
         if (ch == sub_ch) {
             counter--;
         } else if (ch == add_ch) {
@@ -36,15 +39,16 @@ int FindMatchingBracket(const TCHAR* str, const int length, const int sel_start,
     // 2. If the matching brackets are already selected, expand the selection to include brackets.
     // 3. If no matching brackets are found, select the whole text.
 
-    const TCHAR chars[] = _TEXT("()[]{}''\"\"``（）［］｛｝《》「」『』【】〖〗‘’“”");
+    const TCHAR chars[] = _TEXT("()[]{}<>''\"\"``（）［］｛｝《》「」『』【】〖〗‘’“”");
     const int types = _tcsclen(chars) / 2;
 
     int start = 0, end = length, distance = (length + 1) * 2;
     for (int i = 0; i < types; i++) {
         const int open_ch = chars[i * 2];
         const int close_ch = chars[i * 2 + 1];
-        int tmp_start = FindMatch(str, sel_start - 1, -1, close_ch, open_ch) + 1;
-        int tmp_end = FindMatch(str, sel_end, length, open_ch, close_ch);
+        const bool in_line = _tcschr(_TEXT("'\"<"), open_ch);
+        int tmp_start = FindMatch(str, sel_start - 1, -1, close_ch, open_ch, in_line) + 1;
+        int tmp_end = FindMatch(str, sel_end, length, open_ch, close_ch, in_line);
         int tmp_distance = min((sel_start - tmp_start) * 2, (tmp_end - sel_end) * 2 + 1);  // left char is more closer
         if (tmp_start != 0 && tmp_end != -1 && tmp_distance < distance) {
             start = tmp_start;
