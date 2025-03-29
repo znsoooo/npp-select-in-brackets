@@ -181,7 +181,7 @@ void SelectInBrackets()
     // Find span and set selections
     int sel_start, sel_end;
     for (int i = 0; i < sels.size(); i++) {
-        if (FindMatchingBracket(wtext, length, C2W(sels[i][0]), C2W(sels[i][1]), sel_start, sel_end)) {
+        if (FindMatchingBracket(wtext, wlength, C2W(sels[i][0]), C2W(sels[i][1]), sel_start, sel_end)) {
             SendMessage(hwnd_scin, i ? SCI_ADDSELECTION : SCI_SETSELECTION, W2C(sel_start), W2C(sel_end));
         }
     }
