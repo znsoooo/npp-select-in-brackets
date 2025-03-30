@@ -7,6 +7,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <tchar.h>
+#include <locale.h>
 #include <vector>
 
 #define min(a, b) ((a) < (b) ? (a) : (b))
@@ -88,8 +89,11 @@ int FindMatchingBrackets(const TCHAR* str, const int length, const Matrix sels, 
     return changed;
 }
 
-static int FindMatchingBracketTest()
+
+int main()  // unit test
 {
+    setlocale(LC_ALL, "");
+
     const TCHAR test[] = _TEXT("A'quick'bown[fox(jumps(over)the(lazy)dog)]（你好（世界））");
     const int length = _tcsclen(test) + 1;  // cursor position can be at the EOF
 
@@ -108,7 +112,3 @@ static int FindMatchingBracketTest()
 
     return 0;
 }
-
-#ifndef PLUGINDEFINITION_H
-int main() { FindMatchingBracketTest(); }
-#endif // PLUGINDEFINITION_H
