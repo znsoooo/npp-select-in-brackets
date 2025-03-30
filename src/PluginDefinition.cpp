@@ -119,7 +119,8 @@ void commandMenuCleanUp()
 //-- STEP 4. DEFINE YOUR ASSOCIATED FUNCTIONS --//
 //----------------------------------------------//
 
-int FindMatchingBracket(const TCHAR* str, int length, int sel_start, int sel_end, int& res_start, int& res_end);
+typedef std::vector<std::vector<int>> Matrix;
+int FindMatchingBrackets(const TCHAR* str, const int length, const Matrix sels, Matrix& results);
 
 void MyMessageBox(TCHAR* fmt, ...)
 {
@@ -145,12 +146,12 @@ HWND GetScintilla()
 
 auto GetSelections(HWND hwnd_scin)
 {
-    std::vector<std::vector<int>> selections;
+    Matrix selections;
     int count = SendMessage(hwnd_scin, SCI_GETSELECTIONS, 0, 0);
     for (int i = 0; i < count; i++) {
         int start = SendMessage(hwnd_scin, SCI_GETSELECTIONNSTART, i, 0);
         int end = SendMessage(hwnd_scin, SCI_GETSELECTIONNEND, i, 0);
-        selections.push_back(std::vector<int>{start, end});
+        selections.push_back({start, end});
     }
     return selections;
 }
@@ -177,13 +178,16 @@ void SelectInBrackets()
 
     // Get all selections
     auto sels = GetSelections(hwnd_scin);
+    auto wsels = sels;
+    for (int i = 0; i < sels.size(); i++) {
+        wsels[i] = {C2W(sels[i][0]), C2W(sels[i][1])};
+    }
 
     // Find span and set selections
-    int sel_start, sel_end;
-    for (int i = 0; i < sels.size(); i++) {
-        if (FindMatchingBracket(wtext, wlength, C2W(sels[i][0]), C2W(sels[i][1]), sel_start, sel_end)) {
-            SendMessage(hwnd_scin, i ? SCI_ADDSELECTION : SCI_SETSELECTION, W2C(sel_start), W2C(sel_end));
-        }
+    auto wsels2 = wsels;
+    FindMatchingBrackets(wtext, wlength, wsels, wsels2);
+    for (int i = 0; i < wsels.size(); i++) {
+        SendMessage(hwnd_scin, i ? SCI_ADDSELECTION : SCI_SETSELECTION, W2C(wsels2[i][0]), W2C(wsels2[i][1]));
     }
 
     // Clean up

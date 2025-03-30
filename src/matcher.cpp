@@ -7,10 +7,13 @@
 #include <stdio.h>
 #include <string.h>
 #include <tchar.h>
+#include <vector>
 
 #define min(a, b) ((a) < (b) ? (a) : (b))
 #define max(a, b) ((a) > (b) ? (a) : (b))
 #define expr(x) printf(#x"=%.15g\n", (double)(x))
+
+typedef std::vector<std::vector<int>> Matrix;
 
 
 static int FindMatch(const TCHAR* str, int pos, const int final_pos, const int add_ch, const int sub_ch, const bool in_line)
@@ -35,13 +38,13 @@ static int FindMatch(const TCHAR* str, int pos, const int final_pos, const int a
 
 int FindMatchingBracket(const TCHAR* str, const int length, const int sel_start, const int sel_end, int& res_start, int& res_end)
 {
-    // 1. Find the matching brackets closest to the selected area.
-    // 2. If the matching brackets are already selected, expand the selection to include brackets.
-    // 3. If no matching brackets are found, select the whole text.
+    // find the matching brackets closest to the selected area.
+    // if no found, select the whole text.
 
     const TCHAR chars[] = _TEXT("()[]{}<>''\"\"``（）［］｛｝《》「」『』【】〖〗‘’“”");
     const int types = _tcsclen(chars) / 2;
 
+    bool found = false;
     int start = 0, end = length, distance = (length + 1) * 2;
     for (int i = 0; i < types; i++) {
         const int open_ch = chars[i * 2];
@@ -51,21 +54,38 @@ int FindMatchingBracket(const TCHAR* str, const int length, const int sel_start,
         int tmp_end = FindMatch(str, sel_end, length, open_ch, close_ch, in_line);
         int tmp_distance = min((sel_start - tmp_start) * 2, (tmp_end - sel_end) * 2 + 1);  // left char is more closer
         if (tmp_start != 0 && tmp_end != -1 && tmp_distance < distance) {
+            found = true;
             start = tmp_start;
             end = tmp_end;
             distance = tmp_distance;
         }
     }
 
-    if (start == sel_start && end == sel_end) {
-        start--;
-        end++;
-    }
-
     res_start = max(0, start);
     res_end = min(length, end);
 
-    return 1;
+    return found;
+}
+
+int FindMatchingBrackets(const TCHAR* str, const int length, const Matrix sels, Matrix& results)
+{
+    // if any selection changed, only change the changed selections.
+    // if not any selection changed, expand to include brackets.
+
+    int changed = 0;
+    for (int i = 0; i < sels.size(); i++) {
+        int start, end;
+        FindMatchingBracket(str, length, sels[i][0], sels[i][1], start, end);
+        results[i] = {start, end};
+        changed += start != sels[i][0] || end != sels[i][1];
+    }
+
+    for (int i = 0; i < sels.size(); i++) {
+        results[i][0] = changed ? results[i][0] : max(0, results[i][0] - 1);
+        results[i][1] = changed ? results[i][1] : min(length, results[i][1] + 1);
+    }
+
+    return changed;
 }
 
 static int FindMatchingBracketTest()
