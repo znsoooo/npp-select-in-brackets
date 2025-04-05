@@ -209,7 +209,8 @@ void SwapSelections(bool anti)
         return;
 
     // Swap selections
-    std::sort(sels.begin(), sels.end(), [](const auto& a, const auto& b) { return a[0] < b[0]; });
+    std::sort(sels.begin(), sels.end(), [](auto a, auto b) { return a[0] < b[0]; });
+    sels.erase(std::remove_if(sels.begin(), sels.end(), [](auto a) { return a[0] == a[1]; }), sels.end());
     SendMessage(hwnd_scin, SCI_BEGINUNDOACTION, 0, 0);
     for (int i = anti ? 0 : sels.size() - 2; anti ? (i < sels.size() - 1) : (i >= 0); anti ? i++ : i--) {
         int j = i + 1;
