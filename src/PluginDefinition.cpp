@@ -1,7 +1,22 @@
-// Select in Brackets (Plugin for Notepad++)
+//Select in Brackets (Plugin for Notepad++)
+//Based on plugindemo by Don HO£¬modified by Shixian Li.
 
-// MIT License
-// Copyright (c) 2024-2025 Shixian Li (znsoooo) <lsx7@sina.com>
+//Copyright (C)2022 Don HO <don.h@free.fr>
+//Copyright (C)2024-2025 Shixian Li (znsoooo) <lsx7@sina.com>
+//
+//This program is free software; you can redistribute it and/or
+//modify it under the terms of the GNU General Public License
+//as published by the Free Software Foundation; either
+//version 2 of the License, or (at your option) any later version.
+//
+//This program is distributed in the hope that it will be useful,
+//but WITHOUT ANY WARRANTY; without even the implied warranty of
+//MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+//GNU General Public License for more details.
+//
+//You should have received a copy of the GNU General Public License
+//along with this program; if not, write to the Free Software
+//Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
 
 #include "PluginDefinition.h"
@@ -93,13 +108,13 @@ void commandMenuInit()
     //            bool check0nInit                // optional. Make this menu item be checked visually
     //            );
 
-    ShortcutKey *sk1 = new ShortcutKey{false, true, false, 'Q'};
+    ShortcutKey *sk1 = new ShortcutKey{false, true, false, 'Q'};  // Alt-Q
     setCommand(0, TEXT("Select in Brackets"), SelectInBrackets, sk1, false);
 
-    ShortcutKey *sk2 = new ShortcutKey{false, true, false, 'X'};
+    ShortcutKey *sk2 = new ShortcutKey{false, true, false, 'X'};  // Alt-X
     setCommand(1, TEXT("Swap Selections"), [](){SwapSelections(false);}, sk2, false);
 
-    ShortcutKey *sk3 = new ShortcutKey{false, true, true, 'X'};
+    ShortcutKey *sk3 = new ShortcutKey{false, true, true, 'X'};  // Alt-Shift-Q
     setCommand(2, TEXT("Anti-Swap Selections"), [](){SwapSelections(true);}, sk3, false);
 }
 
