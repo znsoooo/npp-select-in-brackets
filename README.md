@@ -53,7 +53,7 @@ The types of brackets supported were written in the "[matcher.cpp](src/matcher.c
 > {Hello[my(world)]}\
 > "Hello'my\`world\`'"\
 > ｛你好［我的（世界）］｝\
-> 《你好《世界》》\
+> 《你好<世界>》\
 > 『你好「世界」』\
 > 〖你好【世界】〗\
 > “你好‘世界’”
@@ -69,7 +69,7 @@ Welcome to suggest any advices in the issues:
 
 ## License
 
-- __Author:__ Lishixian
+- __Author:__ Shixian Li
 - __QQ:__ 11313213
 - __Email:__ lsx7@sina.com
 - __GitHub:__ https://github.com/znsoooo/npp-select-in-brackets
