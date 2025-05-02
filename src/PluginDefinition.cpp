@@ -30,6 +30,7 @@
 #include <stdlib.h>
 #include <time.h>
 #include <shlwapi.h>
+#include <tuple>
 #include <vector>
 #include <algorithm>
 
@@ -134,8 +135,8 @@ void commandMenuCleanUp()
 //-- STEP 4. DEFINE YOUR ASSOCIATED FUNCTIONS --//
 //----------------------------------------------//
 
-typedef std::vector<std::vector<int>> Matrix;
-int FindMatchingBrackets(const TCHAR* str, const int length, const Matrix sels, Matrix& results);
+typedef std::vector<std::vector<int>> Vec2d;
+std::tuple<int, Vec2d> FindMatchingBrackets(const TCHAR* str, const int length, const Vec2d sels);
 
 void MyMessageBox(TCHAR* fmt, ...)
 {
@@ -161,7 +162,7 @@ HWND GetScintilla()
 
 auto GetSelections(HWND hwnd_scin)
 {
-    Matrix selections;
+    Vec2d selections;
     int count = SendMessage(hwnd_scin, SCI_GETSELECTIONS, 0, 0);
     for (int i = 0; i < count; i++) {
         int start = SendMessage(hwnd_scin, SCI_GETSELECTIONNSTART, i, 0);
@@ -199,9 +200,8 @@ void SelectInBrackets()
     }
 
     // Find span and set selections
-    auto wsels2 = wsels;
-    FindMatchingBrackets(wtext, wlength, wsels, wsels2);
-    for (int i = 0; i < wsels.size(); i++) {
+    auto [found, wsels2] = FindMatchingBrackets(wtext, wlength, wsels);
+    for (int i = 0; i < wsels2.size(); i++) {
         SendMessage(hwnd_scin, i ? SCI_ADDSELECTION : SCI_SETSELECTION, W2C(wsels2[i][0]), W2C(wsels2[i][1]));
     }
 

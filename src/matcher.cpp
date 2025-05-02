@@ -4,17 +4,16 @@
 
 #define _UNICODE  // enable unicode
 
-#include <stdio.h>
-#include <string.h>
 #include <tchar.h>
 #include <locale.h>
+#include <tuple>
 #include <vector>
 
 #define min(a, b) ((a) < (b) ? (a) : (b))
 #define max(a, b) ((a) > (b) ? (a) : (b))
 #define expr(x) printf(#x"=%.15g\n", (double)(x))
 
-typedef std::vector<std::vector<int>> Matrix;
+typedef std::vector<std::vector<int>> Vec2d;
 
 
 static int FindMatch(const TCHAR* str, int pos, const int final_pos, const int add_ch, const int sub_ch, const bool in_line)
@@ -37,7 +36,7 @@ static int FindMatch(const TCHAR* str, int pos, const int final_pos, const int a
     return -1;
 }
 
-int FindMatchingBracket(const TCHAR* str, const int length, const int sel_start, const int sel_end, int& res_start, int& res_end)
+static auto FindMatchingBracket(const TCHAR* str, const int length, const int sel_start, const int sel_end)
 {
     // find the matching brackets closest to the selected area.
     // if no found, select the whole text.
@@ -62,22 +61,20 @@ int FindMatchingBracket(const TCHAR* str, const int length, const int sel_start,
         }
     }
 
-    res_start = max(0, start);
-    res_end = min(length, end);
-
-    return found;
+    return std::make_tuple(found, max(0, start), min(length, end));
 }
 
-int FindMatchingBrackets(const TCHAR* str, const int length, const Matrix sels, Matrix& results)
+auto FindMatchingBrackets(const TCHAR* str, const int length, const Vec2d sels)
 {
     // if any selection changed, only change the changed selections.
     // if not any selection changed, expand to include brackets.
 
     int changed = 0;
+    Vec2d results;
+
     for (int i = 0; i < sels.size(); i++) {
-        int start, end;
-        FindMatchingBracket(str, length, sels[i][0], sels[i][1], start, end);
-        results[i] = {start, end};
+        auto [found, start, end] = FindMatchingBracket(str, length, sels[i][0], sels[i][1]);
+        results.push_back({start, end});
         changed += start != sels[i][0] || end != sels[i][1];
     }
 
@@ -86,12 +83,14 @@ int FindMatchingBrackets(const TCHAR* str, const int length, const Matrix sels, 
         results[i][1] = changed ? results[i][1] : min(length, results[i][1] + 1);
     }
 
-    return changed;
+    return std::make_tuple(changed, results);
 }
 
 
 int main()  // unit test
 {
+    // del a.exe & cls & g++ -std=c++17 matcher.cpp & a
+
     setlocale(LC_ALL, "");
 
     const TCHAR test[] = _TEXT("A'quick'bown[fox(jumps(over)the(lazy)dog)]（你好（世界））");
@@ -100,8 +99,8 @@ int main()  // unit test
     expr(sizeof(TCHAR));
 
     for (int pos = 0; pos < length; pos++) {
-        int start, end;
-        if (FindMatchingBracket(test, length - 1, pos, pos, start, end)) {
+        auto [found, start, end] = FindMatchingBracket(test, length - 1, pos, pos);
+        if (found) {
             TCHAR match[length + 1] = {0};
             _tcsncpy(match, test + start, end - start);
             _tprintf(_TEXT("pos = %d, cur = '%c', span = (%d, %d), match = '%s'\n"), pos, test[pos], start, end, match);
