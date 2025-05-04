@@ -20,14 +20,24 @@ static const TCHAR text_inline[] = _TEXT("'\"<");
 static const TCHAR text_eol[] = _TEXT("\r\n");
 
 
-static bool CountChar(const TCHAR ch, const TCHAR add_ch, const TCHAR sub_ch, int& counter)
+static bool CountChar(const TCHAR ch, const TCHAR add_ch, const TCHAR sub_ch, const bool in_line, int& counter, bool& checked, bool& any)
 {
+    if (checked) {
+        return false;
+    } else {
+        any = true;
+    }
+    if (in_line && _tcschr(text_eol, ch)) {
+        checked = true;
+        return false;
+    }
     if (ch == sub_ch) {
         counter--;
     } else if (ch == add_ch) {
         counter++;
     }
     if (counter == -1) {
+        checked = true;
         return true;
     }
     return false;
@@ -41,19 +51,28 @@ static auto FindMatchingBracket(const TCHAR* str, const int length, const int se
 
     const int count = _tcsclen(text_brackets) & ~1;
 
-    int counter[count] = {0};
+    bool in_line[count] = {0};
+    int  counter[count] = {0};
+    bool checked[count] = {0};
+    bool any = true;
 
-    for (int idx_left = sel_start - 1, idx_right = sel_end; idx_left >= 0 || idx_right < length; idx_left--, idx_right++) {
+    for (int i = 0; i < count; i += 2) {
+        in_line[i] = in_line[i + 1] = _tcschr(text_inline, text_brackets[i]);
+    }
+
+    for (int idx_left = sel_start - 1, idx_right = sel_end; any && idx_left >= 0 && idx_right < length; idx_left--, idx_right++) {
+        any = false;
         if (idx_left >= 0) {
             const TCHAR ch_left = str[idx_left];
             for (int idx_br = 0; idx_br < count; idx_br += 2) {
                 const TCHAR open_ch = text_brackets[idx_br];
                 const TCHAR close_ch = text_brackets[idx_br + 1];
-                if (CountChar(ch_left, close_ch, open_ch, counter[idx_br])) {
+                if (CountChar(ch_left, close_ch, open_ch, in_line[idx_br], counter[idx_br], checked[idx_br], any)) {
                     int counter2 = 0;
-                    for (int idx_right2 = sel_end; idx_right2 < length; idx_right2++) {
+                    bool checked2 = false, any2 = false;
+                    for (int idx_right2 = sel_end; !checked2 && idx_right2 < length; idx_right2++) {
                         const TCHAR ch_right2 = str[idx_right2];
-                        if (CountChar(ch_right2, open_ch, close_ch, counter2)) {
+                        if (CountChar(ch_right2, open_ch, close_ch, in_line[idx_br], counter2, checked2, any2)) {
                             return std::make_tuple(true, idx_left + 1, idx_right2);
                         }
                     }
@@ -65,11 +84,12 @@ static auto FindMatchingBracket(const TCHAR* str, const int length, const int se
             for (int idx_br = 1; idx_br < count; idx_br += 2) {
                 const TCHAR open_ch = text_brackets[idx_br - 1];
                 const TCHAR close_ch = text_brackets[idx_br];
-                if (CountChar(ch_right, open_ch, close_ch, counter[idx_br])) {
+                if (CountChar(ch_right, open_ch, close_ch, in_line[idx_br], counter[idx_br], checked[idx_br], any)) {
                     int counter2 = 0;
-                    for (int idx_left2 = sel_start - 1; idx_left2 >= 0; idx_left2--) {
+                    bool checked2 = false, any2 = false;
+                    for (int idx_left2 = sel_start - 1; !checked2 && idx_left2 >= 0; idx_left2--) {
                         const TCHAR ch_left2 = str[idx_left2];
-                        if (CountChar(ch_left2, close_ch, open_ch, counter2)) {
+                        if (CountChar(ch_left2, close_ch, open_ch, in_line[idx_br], counter2, checked2, any2)) {
                             return std::make_tuple(true, idx_left2 + 1, idx_right);
                         }
                     }
